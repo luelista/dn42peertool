@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-
+import logging
+logging.basicConfig(level='INFO')
 import json
 from _db import Peer, config
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from collections import OrderedDict
 
 class ApiHttpHandler(BaseHTTPRequestHandler):
 
@@ -25,8 +25,7 @@ class ApiHttpHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == '/peers':
-            publish = ['peername', 'vpn_type', 'wg_listenport', 'wg_peer_endpoint', 'wg_peer_publickey', 'peer_ipv4', 'peer_ipv6', 'my_transfer_ipv4', 'my_transfer_ipv6']
-            peers = [OrderedDict([(k, getattr(p, k)) for k in publish]) for p in Peer.find()]
+            peers = [p.get_obj() for p in Peer.find()]
             self.jsonresponse({'peers': peers})
         else:
             self.jsonerror(404, 'not found')
@@ -50,8 +49,9 @@ class ApiHttpHandler(BaseHTTPRequestHandler):
 
 
 
-
-server = HTTPServer(('', 8080), ApiHttpHandler)
+listen_tupel = ('', int(config['httpapi']['listen_port']))
+logging.info("Listening on %s", listen_tupel)
+server = HTTPServer(listen_tupel, ApiHttpHandler)
 server.serve_forever()
 
 

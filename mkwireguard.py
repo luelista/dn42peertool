@@ -16,6 +16,8 @@ def create_wireguard_link(ifname, listen_port, private_key, peer_pk, peer_ep, al
         (["endpoint", peer_ep,] if peer_ep else [])+
         ["allowed-ips", allowed_ips], input=private_key.encode('ascii'))
     check_call(["ip", "link", "set", "dev", ifname, "up"])
+    check_call(["iptables", "-A", "INPUT", "--proto", "udp", "--dport", str(listen_port), "-j", "ACCEPT"])
+    check_call(["ip6tables", "-A", "INPUT", "--proto", "udp", "--dport", str(listen_port), "-j", "ACCEPT"])
 
 def add_address(ifname, address, peer_address=None):
     cmd = ["ip", "address", "add", address, "dev", ifname]

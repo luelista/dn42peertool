@@ -1,5 +1,7 @@
 
 import sqlite3, configparser
+from collections import OrderedDict
+from subprocess import check_output
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -41,5 +43,14 @@ class Peer:
                     (self.peername, self.asnumber, self.vpn_type, self.wg_listenport, self.wg_peer_endpoint, self.wg_peer_publickey, self.peer_ipv4, self.peer_ipv6, self.my_wg_privatekey, self.my_transfer_ipv4, self.my_transfer_ipv6, self.rowid))
         db.commit()
 
+    def get_obj(self):
+        publish = ['peername', 'vpn_type', 'wg_listenport', 'wg_peer_endpoint', 'wg_peer_publickey', 'peer_ipv4', 'peer_ipv6', 'my_transfer_ipv4', 'my_transfer_ipv6']
+        o = OrderedDict([(k, getattr(self, k)) for k in publish])
+        o['my_wg_publickey'] = Peer.wg_pubkey(self.my_wg_privatekey)
+        return o
+
+
+    def wg_pubkey(privkey):
+        return check_output(["wg", "pubkey"], input=privkey.encode("ascii")).decode("ascii").strip().strip()
 
 
