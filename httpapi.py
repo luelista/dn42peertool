@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import json
-from _db import Peer
+from _db import Peer, config
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from collections import OrderedDict
 
@@ -37,6 +37,7 @@ class ApiHttpHandler(BaseHTTPRequestHandler):
             json = self.get_json_request()
             peer.peername = json['peername']
             peer.vpn_type = 'wireguard' #json['vpn_type']
+            peer.asnumber = ''
             peer.wg_listenport = Peer.get_next_wg_listenport()
             peer.wg_peer_endpoint = json['wg_peer_endpoint']
             peer.wg_peer_publickey = json['wg_peer_publickey']
