@@ -1,0 +1,12 @@
+[Unit]
+Description=Wireguard tunnel autoconfiguration
+After=network.service
+
+[Service]
+WorkingDir=/opt/dn42peertool/
+User=root
+Type=oneshot
+ExecStart=/opt/dn42peertool/mkwireguard.py
+
+[Install]
+WantedBy=multi-user.target
