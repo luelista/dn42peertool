@@ -2,7 +2,7 @@
 
 from subprocess import check_call, check_output, DEVNULL
 from _db import Peer, c
-
+import sys
 def delete_link(ifname):
     check_output(["ip", "link", "delete", "dev", ifname], stderr=DEVNULL)
 
@@ -24,19 +24,39 @@ def add_address(ifname, address, peer_address=None):
     if peer_address: cmd += ["peer", peer_address]
     check_call(cmd)
 
-for peer in Peer.find('vpn_type="wireguard"'):
-    print("Setting up "+peer.get_ifname()+", listen on "+str(peer.wg_listenport)+", endpoint "+str(peer.wg_peer_endpoint))
-    try:
+def setup():
+    for peer in Peer.find('vpn_type="wireguard"'):
+        print("Setting up "+peer.get_ifname()+", listen on "+str(peer.wg_listenport)+", endpoint "+str(peer.wg_peer_endpoint))
+        try:
+            try:
+                delete_link(peer.get_ifname())
+            except:
+                pass
+
+            create_wireguard_link(peer.get_ifname(), peer.wg_listenport, peer.my_wg_privatekey, peer.wg_peer_publickey, peer.wg_peer_endpoint)
+            if peer.my_transfer_ipv4: add_address(peer.get_ifname(), peer.my_transfer_ipv4, peer_address=peer.peer_ipv4)
+            add_address(peer.get_ifname(), peer.my_transfer_ipv6, peer_address=peer.peer_ipv6)
+        except Exception as e:
+            print("FAIL: ",e)
+            delete_link(peer.get_ifname())
+
+def teardown():
+    for peer in Peer.find('vpn_type="wireguard"'):
+        print("Tearing down "+peer.get_ifname())
         try:
             delete_link(peer.get_ifname())
-        except:
-            pass
+        except Exception as e:
+            print("FAIL: ",e)
+            delete_link(peer.get_ifname())
 
-        create_wireguard_link(peer.get_ifname(), peer.wg_listenport, peer.my_wg_privatekey, peer.wg_peer_publickey, peer.wg_peer_endpoint)
-        if peer.my_transfer_ipv4: add_address(peer.get_ifname(), peer.my_transfer_ipv4, peer_address=peer.peer_ipv4)
-        add_address(peer.get_ifname(), peer.my_transfer_ipv6, peer_address=peer.peer_ipv6)
-    except Exception as e:
-        print("FAIL: ",e)
-        delete_link(peer.get_ifname())
-
+def usage():
+    print("use param -setup / -teardown")
+if len(sys.argv)<2:
+    usage()
+elif sys.argv[1]== "-setup":
+    setup()
+elif sys.argv[1] =="-teardown":
+    teardown()
+else:
+    usage()
 
