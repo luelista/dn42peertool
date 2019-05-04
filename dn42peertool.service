@@ -6,7 +6,8 @@ After=network.service
 WorkingDir=/opt/dn42peertool/
 User=root
 Type=oneshot
-ExecStart=/opt/dn42peertool/mkwireguard.py
+ExecStart=/opt/dn42peertool/mkwireguard.py -setup
+ExecStop=/opt/dn42peertool/mkwireguard.py -teardown
 
 [Install]
 WantedBy=multi-user.target
